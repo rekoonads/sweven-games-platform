@@ -1,10 +1,16 @@
 # Daemon Service
 FROM golang:1.18-alpine AS builder
 
-WORKDIR /app
-COPY daemon/ ./daemon/
-WORKDIR /app/daemon
+# Install git to handle submodules
+RUN apk add --no-cache git
 
+WORKDIR /app
+
+# Copy the entire repository
+COPY . .
+
+# Build daemon
+WORKDIR /app/daemon
 RUN go mod download || true
 RUN go build -o daemon . || echo "Daemon build from source"
 

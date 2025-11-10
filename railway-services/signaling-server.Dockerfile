@@ -1,10 +1,19 @@
 # Signaling Server Service
 FROM golang:1.18-alpine AS builder
 
-WORKDIR /app
-COPY signaling-server/ ./signaling-server/
-WORKDIR /app/signaling-server
+# Install git to handle submodules
+RUN apk add --no-cache git
 
+WORKDIR /app
+
+# Copy the entire repository
+COPY . .
+
+# Initialize submodules if not already done
+RUN git submodule update --init --recursive signaling-server || true
+
+# Build signaling server
+WORKDIR /app/signaling-server
 RUN go mod download
 RUN go build -o signaling .
 

@@ -2,9 +2,12 @@
 FROM golang:1.18-alpine AS builder
 
 WORKDIR /app
-COPY webrtc-proxy/ ./webrtc-proxy/
-WORKDIR /app/webrtc-proxy
 
+# Copy the entire repository
+COPY . .
+
+# Build webrtc-proxy
+WORKDIR /app/webrtc-proxy
 RUN go mod download
 RUN go build -o webrtc-proxy .
 
