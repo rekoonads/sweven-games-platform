@@ -1,14 +1,16 @@
 # WebRTC Proxy Service
 FROM golang:1.18-alpine AS builder
 
-WORKDIR /app
-
-# Copy the entire repository
-COPY . .
-
-# Build webrtc-proxy
 WORKDIR /app/webrtc-proxy
+
+# Copy webrtc-proxy files
+COPY webrtc-proxy/go.mod webrtc-proxy/go.sum ./
 RUN go mod download
+
+# Copy the rest of the source
+COPY webrtc-proxy/ ./
+
+# Build
 RUN go build -o webrtc-proxy .
 
 FROM alpine:latest
