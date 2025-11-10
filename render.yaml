@@ -1,0 +1,49 @@
+# Render Blueprint for All-in-One Deployment
+# Deploy at: https://render.com
+
+services:
+  # WebRTC Proxy Service
+  - type: web
+    name: sweven-webrtc-proxy
+    env: docker
+    dockerfilePath: ./railway-services/webrtc-proxy.Dockerfile
+    plan: starter
+    region: oregon
+    healthCheckPath: /
+    envVars:
+      - key: STUN_SERVER
+        value: stun:stun.l.google.com:19302
+      - key: PORT
+        value: 8080
+      - key: SIGNALING_SERVER_URL
+        fromService:
+          name: sweven-signaling
+          type: web
+          property: host
+
+  # Signaling Server Service
+  - type: web
+    name: sweven-signaling
+    env: docker
+    dockerfilePath: ./railway-services/signaling-server.Dockerfile
+    plan: starter
+    region: oregon
+    envVars:
+      - key: WEBSOCKET_PORT
+        value: 8088
+      - key: GRPC_PORT
+        value: 8000
+
+  # Daemon Service
+  - type: worker
+    name: sweven-daemon
+    env: docker
+    dockerfilePath: ./railway-services/daemon.Dockerfile
+    plan: starter
+    region: oregon
+    envVars:
+      - key: SIGNALING_SERVER_URL
+        fromService:
+          name: sweven-signaling
+          type: web
+          property: host

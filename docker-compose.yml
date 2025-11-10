@@ -1,0 +1,58 @@
+version: '3.8'
+
+services:
+  # WebRTC Proxy - Main streaming service
+  webrtc-proxy:
+    build:
+      context: .
+      dockerfile: railway-services/webrtc-proxy.Dockerfile
+    container_name: sweven-webrtc-proxy
+    ports:
+      - "8080:8080"
+    environment:
+      - STUN_SERVER=stun:stun.l.google.com:19302
+      - PORT=8080
+      - SIGNALING_SERVER_URL=http://signaling-server:8088
+    depends_on:
+      - signaling-server
+    restart: unless-stopped
+    networks:
+      - sweven-network
+
+  # Signaling Server - WebRTC signaling
+  signaling-server:
+    build:
+      context: .
+      dockerfile: railway-services/signaling-server.Dockerfile
+    container_name: sweven-signaling
+    ports:
+      - "8088:8088"  # WebSocket
+      - "8000:8000"  # gRPC
+    environment:
+      - WEBSOCKET_PORT=8088
+      - GRPC_PORT=8000
+      - VALIDATION_URL=http://auth-service:3000
+    restart: unless-stopped
+    networks:
+      - sweven-network
+
+  # Daemon - Backend service
+  daemon:
+    build:
+      context: .
+      dockerfile: railway-services/daemon.Dockerfile
+    container_name: sweven-daemon
+    environment:
+      - SIGNALING_SERVER_URL=http://signaling-server:8088
+    depends_on:
+      - signaling-server
+    restart: unless-stopped
+    networks:
+      - sweven-network
+
+networks:
+  sweven-network:
+    driver: bridge
+
+volumes:
+  daemon-data:
