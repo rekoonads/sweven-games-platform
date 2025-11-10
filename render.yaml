@@ -1,27 +1,17 @@
 # Render Blueprint for All-in-One Deployment
 # Deploy at: https://render.com
+#
+# Prerequisites:
+# - Auth service already deployed separately
+# - Set AUTH_SERVICE_URL environment variable with your auth service URL
+#
+# This will deploy:
+# 1. WebRTC Proxy (streaming service)
+# 2. Signaling Server (WebRTC signaling)
+# 3. Daemon (backend service)
 
 services:
-  # WebRTC Proxy Service
-  - type: web
-    name: sweven-webrtc-proxy
-    env: docker
-    dockerfilePath: ./railway-services/webrtc-proxy.Dockerfile
-    plan: starter
-    region: oregon
-    healthCheckPath: /
-    envVars:
-      - key: STUN_SERVER
-        value: stun:stun.l.google.com:19302
-      - key: PORT
-        value: 8080
-      - key: SIGNALING_SERVER_URL
-        fromService:
-          name: sweven-signaling
-          type: web
-          property: host
-
-  # Signaling Server Service
+  # Signaling Server Service (Deploy First)
   - type: web
     name: sweven-signaling
     env: docker
@@ -33,6 +23,28 @@ services:
         value: 8088
       - key: GRPC_PORT
         value: 8000
+      - key: VALIDATION_URL
+        sync: false
+        # Set this to your already-deployed auth service URL
+        # Example: https://your-auth-service.railway.app
+
+  # WebRTC Proxy Service
+  - type: web
+    name: sweven-webrtc-proxy
+    env: docker
+    dockerfilePath: ./railway-services/webrtc-proxy.Dockerfile
+    plan: starter
+    region: oregon
+    envVars:
+      - key: STUN_SERVER
+        value: stun:stun.l.google.com:19302
+      - key: PORT
+        value: 8080
+      - key: SIGNALING_SERVER_URL
+        fromService:
+          name: sweven-signaling
+          type: web
+          property: host
 
   # Daemon Service
   - type: worker
